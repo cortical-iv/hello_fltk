@@ -1,0 +1,1305 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=windows-1252"></head><body>
+<b>Bugs</b>
+<br>
+<pre>
+Programming: Principles and Practice Using C++
+Fourth printing
+March 2016
+
+ Page 878
+======================================================================
+
+ --- #1 ---
+string s {"\" [[:alnum:]]+\""};
+
+The line of code above has a wrong space there. Remove it:
+string s {"\"[[:alnum:]]+\""};
+
+ --- #2 ---
+The statement: "to put that string literal into a regex, we must escape the backslashes:"
+is wrong.
+Proof:
+
+$ cat test.cpp 
+#include &lt;regex&gt;
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;fstream&gt;
+using namespace std;
+
+int main()
+{
+          ifstream in {"file.txt"};                                         // input file
+          if (!in) cerr &lt;&lt; "no file\n";
+
+          regex pat {"\"[[:alnum:]]+\""};           // postal code pattern
+
+          int lineno = 0;
+
+        for (string line; getline(cin,line); ) {
+                  smatch matches;
+                  if (regex_search(line, matches, pat)) {
+                            cout &lt;&lt; lineno &lt;&lt; ": " &lt;&lt; matches[0] &lt;&lt; '\n';       // whole match
+                            if (1&lt;matches.size() &amp;&amp; matches[1].matched)
+                                      cout  &lt;&lt; "\t: " &lt;&lt; matches[1] &lt;&lt; '\n';            // sub-match
+                  }
+        }
+
+}
+
+$ CC test.cpp -std=c++14
+$ ./a.out
+"hello"
+0: "hello"
+$ 
+
+ --- #3 ---
+
+regex s2 {R"(" [[:alnum:]]+")"};
+
+The code above has one whitespace that shouldn't be there. Remove it:
+regex s2 {R"("[[:alnum:]]+")"};
+
+ Page 971
+======================================================================
+
+# 1
+In the code, string op is not used, so it should be removed.
+
+# 2
+"hex" manipulator is persistent, so it is not necessary to do 
+"outf &lt;&lt; hex" for each while iteration.
+
+# 3
+In the last if, it is missing "setw(8)" for each outptr element (0 and 1).
+Because setw is not persistent.
+
+Final version:
+
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;iomanip&gt;
+
+#include &lt;cstdlib&gt;
+
+using namespace std;
+
+void encipher(
+          const unsigned long *const v,
+          unsigned long *const w,
+          const unsigned long * const k)
+{
+          static_assert(sizeof(long)==4,"size of long wrong for TEA");
+
+          unsigned long y = v[0];
+          unsigned long z = v[1];
+          unsigned long sum = 0;
+          const unsigned long delta = 0x9E3779B9;
+
+          for (unsigned long n = 32; n--&gt;0; ) {
+                    y += (z&lt;&lt;4 ^ z&gt;&gt;5) + z^sum + k[sum&amp;3];
+                    sum += delta;
+                    z += (y&lt;&lt;4 ^ y&gt;&gt;5) + y^sum + k[sum&gt;&gt;11 &amp; 3];
+          }
+          w[0]=y;
+          w[1]=z;
+}
+
+int main()
+{
+using namespace std;
+          const int nchar = 2*sizeof(long);        // 64 bits
+          const int kchar = 2*nchar;                   // 128 bits
+
+          string key;
+          string infile;
+          string outfile;
+          cout &lt;&lt; "please enter input file name, output file name, and key:\n";
+          cin &gt;&gt; infile &gt;&gt; outfile &gt;&gt; key;
+          while (key.size()&lt;kchar) key += '0';    // pad key
+          ifstream inf(infile);
+          ofstream outf(outfile);
+          if (!inf || !outf) exit(1);
+
+          const unsigned long* k =
+                    reinterpret_cast&lt;const unsigned long*&gt;(key.data());
+
+          unsigned long outptr[2];
+          char inbuf[nchar];
+          unsigned long* inptr = reinterpret_cast&lt;unsigned long*&gt;(inbuf);
+          int count = 0;
+
+          outf &lt;&lt; hex;                  // use hexadecimal output
+
+          while (inf.get(inbuf[count])) {
+                    if (++count == nchar) {
+                              encipher(inptr,outptr,k);
+                              // pad with leading zeros:
+                              outf &lt;&lt; setw(8) &lt;&lt; setfill('0') &lt;&lt; outptr[0] &lt;&lt; ' '
+                                        &lt;&lt; setw(8) &lt;&lt; setfill('0') &lt;&lt; outptr[1] &lt;&lt; ' ';
+                              count = 0;
+                    }
+          }
+
+          if (count) {  // pad
+                    while(count != nchar) inbuf[count++] = '0';
+                    encipher(inptr,outptr,k);
+                    outf &lt;&lt; setw(8) &lt;&lt; setfill('0') &lt;&lt; outptr[0] &lt;&lt; ' '  
+                        &lt;&lt; setw(8) &lt;&lt; setfill('0') &lt;&lt; outptr[1] &lt;&lt; ' ';
+          }
+
+          return 0;
+}
+
+Additional information:
+https://chcpp.info/index.php/2017/09/01/ppp2-25-5-6-simple-encryption-encipher-and-decipher-complete-code-and-example-g-and-clang/
+
+ Page 954
+======================================================================
+
+function f has the following line:
+
+better2(make_ref(s2));
+
+And the comment is: "OK (no conversion needed)"
+
+However, there is a conversion: Array_ref&lt;Shape *&gt; to Array_ref&lt;Shape * const&gt;
+
+Simple Example Proofing it:
+
+#include &lt;iostream&gt;
+
+using namespace std;
+
+template &lt;typename T&gt;
+class A
+{
+        public:
+                A(): a{}
+                {
+                        cout &lt;&lt; "hello" &lt;&lt; endl;
+                }
+
+                template &lt;typename Q&gt;
+                operator A&lt;const Q&gt;()
+                {
+                        cout &lt;&lt; "convertion" &lt;&lt; endl;
+                        return A&lt;const Q&gt;{};
+                }
+
+        private:
+                T a;
+
+};
+
+int main()
+{
+
+        A&lt;int&gt; i{};
+
+        A&lt;const int&gt; b = i;
+
+        return 0;
+}
+
+
+ Page 951
+======================================================================
+
+In Section 25.4.4 the book says:
+
+"In ----&gt; 19.3.3 &lt;---- and 25.4.2, we saw that the type system has very good reasons
+for refusing to accept an vector&lt;Circle&gt; as a vector&lt;Shape&gt;
+[...]
+it might be a good  ideia to reread ----&gt; 19.3.3 &lt;----, [...]
+"
+
+The correct should be 19.3.4.
+
+ Page 915
+======================================================================
+
+See the program at the end of the Page 915:
+
+        vector&lt;int&gt; hist(2*15);
+     
+        for(int i=0;i&lt;500;i++)
+                ++hist[int(round(gen()))] 
+     
+The problem is: 
+    That program doesn't consider situations where the random generated number is 
+greater than 29 or less than 0. Example:
+
+See the program below:
+
+#include &lt;random&gt;
+#include &lt;vector&gt;
+#include &lt;functional&gt;
+#include &lt;iostream&gt;
+
+using namespace std;
+
+int main()
+{
+
+        auto gen = bind(normal_distribution&lt;double&gt;{15,4.0}, default_random_engine{});
+
+        vector&lt;int&gt; hist(30);
+
+        for(int i=0;i&lt;50000;i++)
+        {
+                int x = int(round(gen()));
+                if(x &gt; 29)
+                        cout &lt;&lt; "alert: " &lt;&lt; x &lt;&lt; " is greater than 29" &lt;&lt; endl;
+                else if(x &lt; 0)
+                        cout &lt;&lt; "alert: " &lt;&lt; x &lt;&lt; " is less than 0" &lt;&lt; endl;
+
+        }
+
+
+
+        return 0;
+}
+
+Running the above program in my computer, the result is:
+
+alert: 31 is greater than 29
+alert: -1 is less than 0
+alert: 31 is greater than 29
+alert: 32 is greater than 29
+alert: 30 is greater than 29
+alert: 30 is greater than 29
+alert: 30 is greater than 29
+alert: 30 is greater than 29
+alert: -1 is less than 0
+alert: 30 is greater than 29
+
+Solution:
+
+
+#include &lt;random&gt;
+#include &lt;vector&gt;
+#include &lt;functional&gt;
+#include &lt;iostream&gt;
+
+using namespace std;
+
+int main()
+{
+
+        auto gen = bind(normal_distribution&lt;double&gt;{15,4.0}, default_random_engine{});
+
+        vector&lt;int&gt; hist(2*15);
+     
+        for(int i=0;i&lt;500;i++)
+        {
+                int x = int(round(gen()));
+                if(x &gt;= 0 &amp;&amp; x &lt; 30) 
+                        ++hist[x];
+        }
+
+        for (int i = 0; i != hist.size(); ++i) {       // write out histogram
+                  cout &lt;&lt; i &lt;&lt; '\t';
+                  for (int j = 0; j != hist[i]; ++j)
+                  cout &lt;&lt; '*';
+                  cout &lt;&lt; '\n';
+        }
+
+        return 0;
+}
+
+
+ Page 912
+======================================================================
+
+elim_with_partial_pivot re-assign pivot and test if it is zero for each i. 
+It is not necessary, my modified version is:
+
+void elim_with_partial_pivot(Matrix&amp; A, Vector&amp; b)
+{
+          const Index n = A.dim1();
+
+          for (Index j = 0; j&lt;n; ++j) {
+                    Index pivot_row = j;
+
+                    // look for a suitable pivot:
+          for (Index k = j+1; k&lt;n; ++k)
+                              if (abs(A(k,j)) &gt; abs(A(pivot_row,j))) pivot_row = k;
+
+                    // swap the rows if we found a better pivot:
+                    if (pivot_row!=j) {
+                              A.swap_rows(j,pivot_row);
+                              std::swap(b(j), b(pivot_row));
+                    }
+
+		    const double pivot = A(j,j);
+                    if (pivot==0) error("can't solve: pivot==0");
+
+                    // elimination:
+                    for (Index i = j+1; i&lt;n; ++i) {
+                              const double mult = A(i,j)/pivot;
+                              A[i].slice(j) = scale_and_add(A[j].slice(j), ?mult, A[i].slice(j));
+                              b(i) ?= mult*b(j);
+                    }
+          }
+}
+
+ Matrix11.h
+======================================================================
+
+See the program bellow:
+
+#include "matrix11.h"
+#include "matrixio11.h"
+
+using namespace Numeric_lib;
+using namespace std;
+
+int main()
+{
+        Matrix&lt;int, 3&gt; a{2,2,2};
+
+        a(0,0,0) = 0;
+        a(0,0,1) = 1;
+        a(0,1,0) = 2;
+        a(0,1,1) = 3;
+        a(1,0,0) = 4;
+        a(1,0,1) = 5;
+        a(1,1,0) = 6;
+        a(1,1,1) = 7;
+
+        a.swap_rows(0,1);
+
+        for(int i=0; i&lt;2 ;i++)
+                for(int j=0;j&lt;2;j++)
+                        for(int k=0;k&lt;2;k++)
+                                cout &lt;&lt; a(i,j,k) &lt;&lt; endl;
+
+        cout &lt;&lt; "--------------" &lt;&lt; endl;
+
+        Matrix&lt;int,2&gt; b{2,2};
+
+        b(0,0) = 0;
+        b(0,1) = 1;
+        b(1,0) = 2;
+        b(1,1) = 3;
+
+        b.swap_rows(0,1);
+
+        for(int i=0; i&lt;2 ;i++)
+                for(int j=0;j&lt;2;j++)
+                                cout &lt;&lt; b(i,j) &lt;&lt; endl;
+
+        cout &lt;&lt; "--------------" &lt;&lt; endl;
+
+        Matrix&lt;int,1&gt; c{2};
+
+        c(0) = 0;
+        c(1) = 1;
+
+        c.swap_rows(0,1);
+
+        cout &lt;&lt; c(0) &lt;&lt; " " &lt;&lt; c(1) &lt;&lt; endl;
+
+        return 0;
+}
+
+swap_rows works to matrix 2d and matrix 3d (in this last case "rows" would be
+"2d matrixes" actually).
+BUT swap_rows doesn't work with matrix 1D because this line (matrix11.h):
+
+line 353:
+ Index max = (*this)[i].size();
+
+Suggestion:
+
+Matrix1D should have the following swap_rows:
+
+    void swap_rows(Index i, Index j)
+        // swap_rows() uses a row's worth of memory for better run-time performance
+        // if you want pairwise swap, just write it yourself
+    {
+        if (i == j) return;
+    
+        std::swap((*this)(i), (*this)(j));
+    }
+
+Using the swap_rows above to matrix 1D, the problem is solved.
+
+ Page 908
+======================================================================
+
+Problem 1:
+
+a[i];            // ith row (C style), range checked
+
+The commentary is incorrect.
+a is a 3d matrix, so a[i] will be 2d matrix (not a 1d row).
+
+Problem 2:
+
+a.slice(i);              // the rows from the ith to the last
+a.slice(i,j);            // the rows from the ith to the jth
+
+"rows" here is incorrect because "slice" generates 3d matrix. 
+And a.slice(i,j) will generate a matrix 3d from the ith to i+j-1 (not jth) 2d matrixes.
+
+Proof:
+
+#include "matrix11.h"
+#include "matrixio11.h"
+
+using namespace Numeric_lib;
+using namespace std;
+
+int main()
+{
+        Matrix&lt;int, 3&gt; a{3,4,5};
+
+        cout &lt;&lt; a.slice(2).size() &lt;&lt; endl;
+        cout &lt;&lt; a.slice(1).size() &lt;&lt; endl;
+        cout &lt;&lt; a.slice(0,2).size() &lt;&lt; endl;
+
+        return 0;
+}
+
+Problem 3:
+
+a.swap_rows(7,9);            // swap rows a[7] &lt;-&gt; a[9]
+
+a is a 3d matrix, so a[7] and a[9] aren't "rows", they are 2d matrixes.
+
+
+ Page 905
+======================================================================
+
+The book says:
+
+int d1 = a.dim1();           // number of elements in a row
+int d2 = a.dim2();           // number of elements in a column
+
+The correct should be:
+
+int d1 = a.dim1();           // number of elements in a column   &lt;- HERE
+int d2 = a.dim2();           // number of elements in a row	 &lt;- HERE
+
+(See the commentary)
+
+Proof:
+
+#include "matrix11.h"
+
+using namespace Numeric_lib;
+using namespace std;
+
+int main()
+{
+        Matrix&lt;int, 2&gt; a{3,4};
+
+        cout &lt;&lt; a.dim1() &lt;&lt; a.dim2() &lt;&lt; endl;
+
+        return 0;
+}
+
+
+ Page 1000
+======================================================================
+
+The make_test function is not correct as it should be.
+
+The test_all function (page 998) accept each Test with the following format:
+{label val {a1 a2 a3 a4 ... an} result }
+
+where,
+	label is a string
+	val is the value that we want to search
+	{a1 a2 a3 ... an} is the list of elements in which we want to search val
+	result is a bool meaning the result that we think as correct (true or false)
+
+On the other hand, the make_test in page 1000 has a different format:
+{label n {a1 a2 a3 ... an} result}
+
+Therefore, the make_test has to be modified. My suggestion is:
+
+void make_test(const string&amp; lab, int n, int base, int spread)
+          // write a test description with the label lab to cout
+          // generate a sequence of n elements starting at base
+          // the average distance between elements is uniformly distributed
+          // in [0:spread)
+{
+          cout &lt;&lt; "{ " &lt;&lt; lab ;
+          vector&lt;int&gt; v;
+          int elem = base;
+          for (int i = 0; i&lt;n; ++i) {    // make elements
+                    elem+= randint(spread);
+                    v.push_back(elem);
+          }
+
+          int val = base+ randint(elem?base);        // make search value
+	  cout &lt;&lt; val &lt;&lt;  "{ " ;
+          bool found = false;
+              for (int i = 0; i&lt;n; ++i) {      // print elements and see if val is found
+                        if (v[i]==val) found = true;
+                        cout &lt;&lt; v[i] &lt;&lt; " ";
+          }
+          cout &lt;&lt; "} " &lt;&lt; found &lt;&lt; " }\n";
+}
+
+ Page 997
+======================================================================
+
+where you have:
+
+vector&lt;int&gt; v { 1,2,3,5,8,13,21 };
+for (int x : {1,5,8,21,-7,2,44})
+          if (binary_search(v.begin(),v.end(),x) == false) cout &lt;&lt; x &lt;&lt; " failed";
+
+The correct should be:
+
+vector&lt;int&gt; v { 1,2,3,5,8,13,21 };
+for (int x : {1,5,8,21})
+          if (binary_search(v.begin(),v.end(),x) == false) cout &lt;&lt; x &lt;&lt; " failed";
+for (int x : {-7,4,22})
+          if (binary_search(v.begin(),v.end(),x) == true) cout &lt;&lt; x &lt;&lt; " failed";
+
+According to initial test, that is:
+
+vector&lt;int&gt; v { 1,2,3,5,8,13,21 };
+if (binary_search(v.begin(),v.end(),1) == false) cout &lt;&lt; "failed";
+if (binary_search(v.begin(),v.end(),5) == false) cout &lt;&lt; "failed";
+if (binary_search(v.begin(),v.end(),8) == false) cout &lt;&lt; "failed";
+if (binary_search(v.begin(),v.end(),21) == false) cout &lt;&lt; "failed";
+if (binary_search(v.begin(),v.end(),?7) == true) cout &lt;&lt; "failed";
+if (binary_search(v.begin(),v.end(),4) == true) cout &lt;&lt; "failed";
+if (binary_search(v.begin(),v.end(),22) == true) cout &lt;&lt; "failed";
+
+ Page 739
+======================================================================
+
+Where you have:
+
+void erase_line(Document&amp; d, int n)
+{
+          if (n&lt;0 || d.line.size()-1&lt;=n) return;
+          auto  p = d.line.begin();
+          advance(p,n);
+          d.line.erase(p);
+}
+
+The correct should be:
+
+void erase_line(Document&amp; d, int n)
+{
+          if (n&lt;0 || d.line.size()-1&lt;n) return;
+          auto  p = d.line.begin();
+          advance(p,n);
+          d.line.erase(p);
+}
+
+Proof:
+
+Image a list with 3 elements.
+element0 element1 element2
+d.line.size()-1 will be 2
+If you want to remove the element 2, the code 
+will return because 2&lt;=2
+The problem is solved when you compare with "&lt;" rather than "&lt;="
+
+ Page 738
+======================================================================
+
+The new Document doesn't have constructor like Document of Page 736 
+
+ Page 728
+======================================================================
+
+Problem:
+
+	Iterator != Iter
+
+Therefore, where you have:
+
+template&lt;typename Iter&gt;  // requires Input_iterator&lt;Iter&gt;() (�19.3.3)
+Iterator high(Iter first, Iter last)
+          // return an iterator to the element in [first,last) that has the highest value
+{
+          Iterator high = first;
+          for (Iterator p = first; p!=last; ++p)
+                    if (*high&lt;*p) high = p;
+          return high;
+}
+
+The correct should be:
+
+template&lt;typename Iter&gt;  
+requires Input_iterator&lt;Iter&gt;()  // (�19.3.3)
+Iter high(Iter first, Iter last)
+          // return an iterator to the element in [first,last) that has the highest value
+{
+          Iter high = first;
+          for (Iter p = first; p!=last; ++p)
+                    if (*high&lt;*p) high = p;
+          return high;
+}
+
+ Page 705 and 706 (item 19.5.6)
+======================================================================
+
+There are some problem in this section:
+bug 1- 	vector_base constructor initializes sz with n which is used to initialize 
+	space as well; it is wrong. A solution is add an additional argument "int m"
+	which can be used to initialize sz with a independent value.
+
+bug 2- 	The vector&lt;T,A&gt;::reserve has a bug, see the line:
+		uninitialized_copy(b.elem,&amp;b.elem[this-&gt;sz],this-&gt;elem); 
+	the correct should be
+		uninitialized_copy(this-&gt;elem, this-&gt;elem+this-&gt;sz, b.elem);
+
+bug 3-  The destructor of vector_base is wrong.
+	Where you have:
+		~vector_base() { alloc.deallocate(elem, space);}
+	The correct should be:
+        ~vector_base()
+        {
+                for(int i=0;i&lt;sz;i++)
+                        alloc.destroy(elem[i]);
+                alloc.deallocate(elem, space);
+        }
+	AND you have to delete this lines (on reserve method):
+	
+	for(int i=0;i&lt;sz;i++)
+		alloc.destroy(&amp;elem[i]);
+
+	
+I did a little program proofing it (19_5_6.cpp bellow) which has the following main:
+        allocator&lt;double&gt; al;
+        vector&lt;double&gt; x{al, {1.2, 3.4, 5.6}};
+        cout &lt;&lt; "size: " &lt;&lt;  x.size() &lt;&lt; ", capacity: " &lt;&lt; x.capacity() &lt;&lt; endl;
+        for(int i=0;i&lt;x.size();i++)
+                cout &lt;&lt; x[i] &lt;&lt; endl;
+        cout &lt;&lt; "-----------" &lt;&lt; endl;
+
+        x.reserve(10);
+        cout &lt;&lt; "size: " &lt;&lt;  x.size() &lt;&lt; ", capacity: " &lt;&lt; x.capacity() &lt;&lt; endl;
+        for(int i=0;i&lt;x.size();i++)
+                cout &lt;&lt; x[i] &lt;&lt; endl;
+        cout &lt;&lt; "-----------" &lt;&lt; endl;
+Steps:
+
+1- Compiling normally using my modified corrected version
+
+$ CC 19_5_6.cpp -std=c++11
+$ ./a.out
+size: 3, capacity: 3
+1.2
+3.4
+5.6
+-----------
+size: 3, capacity: 10
+1.2
+3.4
+5.6
+-----------
+$ 
+The result is OK.
+
+2- Compiling enabling the bug 1:
+
+$ CC 19_5_6.cpp -std=c++11 -DINCORRECT1
+$ ./a.out
+size: 3, capacity: 3
+1.2
+3.4
+5.6
+-----------
+size: 10, capacity: 10
+1.2
+3.4
+5.6
+0
+0
+0
+0
+0
+0
+0
+-----------
+BUG 1 is present here, the reserve is modifying size.
+
+3- Compiling enabling the bug 2:
+
+$ CC 19_5_6.cpp -std=c++11 -DINCORRECT2
+$ ./a.out
+size: 3, capacity: 3
+1.2
+3.4
+5.6
+-----------
+size: 3, capacity: 10
+0
+0
+0
+-----------
+BUG 2 is doing the program behaves wrongly.
+
+4- Talking about the bug 3
+
+You can enable the bug 3 in this way:
+$ CC 19_5_6.cpp -std=c++11 -DINCORRECT3
+
+However, you will not see visual differences.
+The problem (when bug 3 is activated) would happen when you use a complex T that uses dynamic allocations, 
+because vector would desalocate, when going out of a block, without destroy before.
+
+** 19_5_6.cpp here: ***
+
+#include &lt;iostream&gt;
+#include &lt;memory&gt;
+#include &lt;initializer_list&gt;
+#include &lt;algorithm&gt;
+
+using namespace std;
+
+template&lt;typename T, typename A&gt;
+struct vector_base {
+        A alloc;
+        T *elem;
+        int sz;
+        int space;
+
+        vector_base(const A &amp;a, int n, int m): 
+                alloc{a}, 
+                elem{alloc.allocate(n)}, 
+        #ifndef INCORRECT1
+                sz{m}, 
+        #else
+                sz{n},
+        #endif
+                space{n}
+        {}
+
+        ~vector_base() 
+	{ 	
+	#ifndef INCORRECT3
+		for(int i=0;i&lt;sz;i++)
+			alloc.destroy(&amp;elem[i]);
+	#endif
+		alloc.deallocate(elem, space);
+	}
+};
+
+template&lt;typename T, typename A = allocator&lt;T&gt;&gt;
+class vector: private vector_base&lt;T,A&gt; {
+        public:
+                vector(const A &amp;a, initializer_list&lt;T&gt; lst): vector_base&lt;T,A&gt;{a, 0, 0} 
+                { 
+                        reserve(lst.size());
+                        int j=0;
+                        for(const T &amp;u : lst)
+                                this-&gt;elem[j++]=u;
+
+                        this-&gt;sz = lst.size();
+                }
+
+                void reserve(int newalloc)
+                {
+                        if(newalloc &lt;= this-&gt;space)
+                                return;
+                        vector_base&lt;T,A&gt; b(this-&gt;alloc,newalloc, this-&gt;sz);
+                #ifndef INCORRECT2
+                        uninitialized_copy(this-&gt;elem, this-&gt;elem+this-&gt;sz, b.elem);
+                #else 
+                        uninitialized_copy(b.elem,&amp;b.elem[this-&gt;sz],this-&gt;elem);
+                #endif
+		
+		#ifndef INCORRECT3
+			/* nothing */
+		#else
+			for(int i=0;i&lt;sz;i++)
+				alloc.destroy(&amp;elem[i]);
+		#endif
+                        swap&lt;vector_base&lt;T,A&gt;&gt;(*this, b);
+                }
+
+                int size() const 
+                {
+                        return this-&gt;sz;
+                }
+
+                int capacity() const
+                {
+                        return this-&gt;space;
+                }
+
+                T &amp;operator[](const int i)
+                {
+                        return this-&gt;elem[i];
+                }
+
+                const T &amp;operator[](const int i) const
+                {
+                        return this-&gt;elem[i];
+                }
+
+};
+
+int main()
+{
+        allocator&lt;double&gt; al;
+        vector&lt;double&gt; x{al, {1.2, 3.4, 5.6}};
+        cout &lt;&lt; "size: " &lt;&lt;  x.size() &lt;&lt; ", capacity: " &lt;&lt; x.capacity() &lt;&lt; endl;
+        for(int i=0;i&lt;x.size();i++)
+                cout &lt;&lt; x[i] &lt;&lt; endl;
+        cout &lt;&lt; "-----------" &lt;&lt; endl;
+
+        x.reserve(10);
+        cout &lt;&lt; "size: " &lt;&lt;  x.size() &lt;&lt; ", capacity: " &lt;&lt; x.capacity() &lt;&lt; endl;
+        for(int i=0;i&lt;x.size();i++)
+                cout &lt;&lt; x[i] &lt;&lt; endl;
+        cout &lt;&lt; "-----------" &lt;&lt; endl;
+    
+        return 0;
+}
+
+ Page 682 and 683
+======================================================================
+
+The book uses the Shape::draw as a example of ad hoc polymorphism.
+The problem is:
+   draw is not virtual. The correct would be to use draw_line as example,
+because draw_line is virtual.
+
+ Page 635
+======================================================================
+
+The correct operator= should be:
+
+vector&amp; vector::operator=(const vector&amp; a)
+          // make this vector a copy of a
+{
+          double* p = new double[a.sz];         // allocate new space
+          copy(a.elem,a.elem+a.sz,p);	   	// copy elements
+          delete[] elem;                        // deallocate old space
+          elem = p;                             // now we can reset elem
+          sz = a.sz;
+          return *this;                         // return a self-reference (see §17.10)
+}
+
+ Page 633
+======================================================================
+
+In the code:
+
+vector:: vector(const vector&amp; arg)
+// allocate elements, then initialize them by copying
+          :sz{arg.sz}, elem{new double[arg.sz]}
+{
+          copy(arg.elem,arg.elem.sz,elem);  // std::copy(); see §B.5.2
+}
+
+The copy line should be:
+copy(arg.elem,arg.elem+sz,elem);
+
+ Page 619 and 620
+======================================================================
+
+Is comparing "this" to "nullptr" legal?
+For me it should be legal but there are peoples who say that it is not, see:
+https://groups.google.com/forum/#!topic/comp.lang.c++/AspSSs0SaIo
+and
+https://groups.google.com/a/isocpp.org/forum/#!topic/std-discussion/hG1Qx8a6Wjw
+
+ Page 587
+======================================================================
+
+Where you have
+
+class vector {
+     int size, age0, age1, age2, age3;
+     // ...
+};
+
+the correct should be
+
+class vector {
+     int size;
+     double age0, age1, age2, age3;
+     // ...
+};
+
+ Page 571
+======================================================================
+
+Suggestion:
+
+the following line:
+	void change(Color c) { lines.set_color(c); }
+could be:
+  	void change(Color c) { lines.set_color(c); Fl::redraw(); }
+
+This modification does the program change the color immediately.
+The original code doesn't change the color immediately when the button is clicked.
+
+ Page 561
+======================================================================
+
+The Widget presented in the page 561 is different from Widget 
+presented in the page 1209 (appendix E).
+
+ Page 561
+======================================================================
+
+The Button presented in the page 561 is "different" from Button 
+presented in the page 563
+
+ Page 530
+======================================================================
+
+where you have
+	label.move(length/3,xy.y+20);
+the correct should be:
+	label.move(xy.x+length/3,xy.y+20);
+
+ Page 523
+======================================================================
+
+Similar problem to page 521. Possible solutions:
+
+Change from ...
+Axis x{Axis::x, Point{20,y_orig}, xlength, xlength/x_scale, "one notch == 1"};
+Axis y{Axis::y, Point{x_orig, ylength+20}, ylength, ylength/y_scale, "one notch == 1"};
+to...
+Axis x{Axis::x, Point{20,y_orig}, xlength, static_cast&lt;int&gt;(xlength/x_scale), "one notch == 1"};
+Axis y{Axis::y, Point{x_orig, ylength+20}, ylength, static_cast&lt;int&gt;(ylength/y_scale), "one notch == 1"};
+
+Or use parenthesis instead '{}'
+
+ Page 521
+======================================================================
+
+The following lines...
+
+	constexpr int r_min = -10;
+	constexpr int r_max = 11;
+	constexpr int x_scale = 30;
+	constexpr int y_scale = 30;
+
+... should be changed to:
+
+        constexpr double r_min = -10;
+        constexpr double r_max = 11;
+        constexpr double x_scale = 30;
+        constexpr double y_scale = 30;
+
+Motive: avoid problems in the Visual Studio compiler.
+
+More detailed discussion about it:
+https://groups.google.com/forum/#!topic/ppp-public/_yM5Bzd10Hs
+
+ Page 479
+======================================================================
+
+ The bug is:
+ "The string{1,c} is a constructor for string, initializing the string to contain the single character c."
+
+ No. The string{1,'a'} will create a vector with two elements: 1 and 97 ('a' ascii value).
+ The correct should be string(1,c).
+
+Firstly postulated here:
+https://groups.google.com/forum/#!topic/comp.lang.c++/Qqq_0A27EtA
+
+Detailed study about it:
+Effective Modern C++, Chapter 3, Item 7: Distinguish between () and {} when creating
+objects 
+
+ Page 476
+======================================================================
+
+It is missing "Marked_polyline::" in Marked_polyline's constructor.
+So,
+change from...
+Marked_polyline(const string&amp; m, initializer_list&lt;Point&gt; lst)
+        : Open_polyline{lst},mark{m}
+{
+        if(m=="")
+                mark = "*";
+}
+
+to...
+
+Marked_polyline::Marked_polyline(const string&amp; m, initializer_list&lt;Point&gt; lst)
+        : Open_polyline{lst},mark{m}
+{
+        if(m=="")
+                mark = "*";
+}
+
+
+ Page 473
+======================================================================
+
+It is missing definition to the following methods:
+- Ellipse::Ellipse
+- Ellipse::draw_lines
+- Ellipse::center
+- Ellipse::focus2
+
+The definitions should be:
+//------------------------------------------------------------------------------
+    
+Ellipse::Ellipse(Point p, int w, int h): w{w}, h{h}
+{
+        add(Point{p.x-w,p.y-h});
+}
+    
+//------------------------------------------------------------------------------
+    
+Point Ellipse::center() const
+{
+        return Point{point(0).x+w,point(0).y+h};
+}
+    
+//------------------------------------------------------------------------------
+    
+Point Ellipse::focus2() const
+{
+        if(h&lt;=w) // foci are on the x axis
+                return Point{center().x-int(sqrt(double(w*w-h*h))),center().y};
+        else     // foci are on the y axis
+                return Point{center().x,center().y-int(sqrt(double(h*h-w*w)))};
+} 
+
+//------------------------------------------------------------------------------
+
+void Ellipse::draw_lines() const
+{
+    if (color().visibility())
+        fl_arc(point(0).x,point(0).y,w+w,h+h,0,360);
+}
+
+//------------------------------------------------------------------------------
+
+
+ Page 472
+======================================================================
+
+Where you have
+	set_point(0,Point{center().x-ww,center().y-h};
+the correct should be
+	set_point(0,Point{center().x-ww,center().y-h});
+
+(it is missing final parenthesis)
+
+ Page 469
+======================================================================
+
+The correct Text's draw_lines should be:
+    
+void Text::draw_lines() const
+{
+        int ofnt = fl_font(); 		// save previous font
+        int osz = fl_size();  		// save previous fontsize
+        fl_font(fnt.as_int(),fnt_sz); 	// set font and fontsize from this Font instance 
+        fl_draw(lab.c_str(),point(0).x,point(0).y); // write label
+        fl_font(ofnt,osz);    		// Back to previous configuration
+}
+ 
+
+ Page 1212
+======================================================================
+
+Vector_ref: 
+The following constructor is not defined:
+Vector_ref(T* a, T* b = 0, T* c = 0, T* d = 0);
+Therefore it can be removed. Final Vector_ref:
+
+template&lt;class T&gt; class Vector_ref {
+    vector&lt;T*&gt; v;
+    vector&lt;T*&gt; owned;
+public:
+    Vector_ref() {}
+    
+    ~Vector_ref() { for (int i=0; i&lt;owned.size(); ++i) delete owned[i]; }
+    
+    void push_back(T&amp; s) { v.push_back(&amp;s); }
+    void push_back(T* p) { v.push_back(p); owned.push_back(p); }
+    
+    T&amp; operator[](int i) { return *v[i]; }
+    const T&amp; operator[](int i) const { return *v[i]; }
+    
+    int size() const { return v.size(); }
+};
+
+ Page 459
+======================================================================
+
+Problem 1
+
+The book says:
+"Here we inherit Closed_polyline's definition of draw_lines(), 
+thus saving a fair bit work and avoiding duplication of code."
+
+BUT the structure Polygon presented has as member:
+void draw_lines() const;
+
+Therefore Closed_polyline's draw_lines should be removed.
+
+Problem 2 
+
+The following statement:
+using Closed_polyline::Closed_polyline;
+
+Ensures that Polyline inherits Open_polyline's constructors, however Open_polyline's constructors
+use Shape::add, which doesn't ensure not-crossing-segments geometry rule of polygons.
+The correct way: define the constructors using Polygon::add instead Shape::add.
+
+Conclusion (Problem 1 + Problem 2)
+
+change from ...
+
+struct Polygon : Closed_polyline {
+	using Closed_polyline::Closed_polyline;
+
+	void add(Point p);
+	void draw_lines() const;
+};
+
+to...
+
+struct Polygon :Closed_polyline {
+	Polygon() {};
+	Polygon(initializer_list&lt;Point&gt; lst);
+
+	void add(Point p);
+};
+
+and
+
+Polygon::Polygon(initializer_list&lt;Point&gt; lst)
+{
+        for(Point p : lst) add(p);
+}
+
+Testing:
+Polygon pol = { {100,200}, {150,300}, {250,350}, {300, 300},{100,350}};
+WITHOUT CHANGES: it draws with segments crossing
+WITH CHANGES: throw exception
+
+ Page 456
+======================================================================
+
+Change from...
+
+struct Open_polyline : Shape {         // open sequence of lines
+	using Shape::Shape;		// use Shape's constructors (A.16)
+    	void add(Point p) { Shape::add(p); }
+};
+
+TO...
+
+struct Open_polyline : Shape {         // open sequence of lines
+    	Open_polyline() {}
+    	Open_polyline(initializer_list&lt;Point&gt; lst): Shape{lst} {}
+    	void add(Point p) { Shape::add(p); }
+};
+
+Justification:
+
+ISO/IEC 14882:2011(E)
+12.9.4
+"A constructor so declared has the same access as the corresponding constructor in X."
+
+Other reference:
+"It has the same access as the corresponding base constructor."
+
+Discussion more detailed:
+https://groups.google.com/forum/#!topic/comp.lang.c++/WuBAGONp4oQ
+
+ Page 494 
+======================================================================
+
+class Shape, where you have
+	Color lcolor {fl_color()};
+change to
+	Color lcolor {static_cast&lt;int&gt;(fl_color())};
+
+Justification:
+	It is necessary for the code runs on several platforms
+
+ Page 450 
+======================================================================
+
+where you have
+
+	void Lines::Lines(initializer_list........
+the correct should be
+	Lines::Lines(initializer_list........
+
+because constructors don't have return type 
+
+ Page 445
+======================================================================
+
+Where you have:
+	x coordinates go from 0 (...) to x_max() [...]
+and
+	y coordinates go from 0 (...) to y_max() [...]
+
+The correct would be:
+
+        x coordinates go from 0 (...) to x_max()-1 [...]
+and
+        y coordinates go from 0 (...) to y_max()-1 [...]
+
+Proof:
+
+#include "Simple_window.h"
+#include "Graph.h"
+
+int main()
+{
+        using Graph_lib::Open_polyline;
+
+        Point tl{ 100,100 };
+        Simple_window win{ tl,600,400,"Canvas" };
+        Open_polyline poly;
+        poly.add(Point{ win.x_max()-1,50 });
+        poly.add(Point{ win.x_max()-1,100 });
+        win.attach(poly);
+        win.wait_for_button();
+
+        return 0;
+}
+
+If you change win.x_max()-1 to win.x_max() the line is not visible.
+
+ Page 434
+======================================================================
+
+Where you have:
+	Mark m {Point{100,200), 'x'};
+The correct would be:
+	Mark m {Point{100,200}, 'x'};
+
+ Other bugs
+======================================================================
+Before creating this site I had used the ppp-public group to post other bugs:
+https://groups.google.com/forum/#!topic/ppp-public/ZwmGfWcuH38
+https://groups.google.com/forum/#!topic/ppp-public/5XP_UcCEzbM
+https://groups.google.com/forum/#!topic/ppp-public/Dp6QY-2h_GU
+https://groups.google.com/forum/#!topic/ppp-public/rpxz2o-_kWE
+
+(Chapter 10 has several problems like the two links following:)
+{
+	https://groups.google.com/forum/#!topic/ppp-public/AW0w28jj0DA
+	https://groups.google.com/forum/#!topic/ppp-public/QNtv5m2L_MA
+}
+
+https://groups.google.com/forum/#!topic/ppp-public/FFgoTLygshI
+https://groups.google.com/forum/#!topic/ppp-public/eeJXwKDoI0c
+</pre>
+
+
+
+</body></html>
