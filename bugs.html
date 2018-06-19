@@ -2,12 +2,14 @@
 <meta http-equiv="content-type" content="text/html; charset=windows-1252"></head><body>
 <b>Bugs</b>
 <br>
+Contributor: Christiano
+<br>
 <pre>
 Programming: Principles and Practice Using C++
 Fourth printing
 March 2016
+Page 878
 
- Page 878
 ======================================================================
 
  --- #1 ---
@@ -21,7 +23,7 @@ The statement: "to put that string literal into a regex, we must escape the back
 is wrong.
 Proof:
 
-$ cat test.cpp 
+$ cat test.cpp
 #include &lt;regex&gt;
 #include &lt;iostream&gt;
 #include &lt;string&gt;
@@ -52,7 +54,7 @@ $ CC test.cpp -std=c++14
 $ ./a.out
 "hello"
 0: "hello"
-$ 
+$
 
  --- #3 ---
 
@@ -68,7 +70,7 @@ regex s2 {R"("[[:alnum:]]+")"};
 In the code, string op is not used, so it should be removed.
 
 # 2
-"hex" manipulator is persistent, so it is not necessary to do 
+"hex" manipulator is persistent, so it is not necessary to do
 "outf &lt;&lt; hex" for each while iteration.
 
 # 3
@@ -145,7 +147,7 @@ using namespace std;
           if (count) {  // pad
                     while(count != nchar) inbuf[count++] = '0';
                     encipher(inptr,outptr,k);
-                    outf &lt;&lt; setw(8) &lt;&lt; setfill('0') &lt;&lt; outptr[0] &lt;&lt; ' '  
+                    outf &lt;&lt; setw(8) &lt;&lt; setfill('0') &lt;&lt; outptr[0] &lt;&lt; ' '
                         &lt;&lt; setw(8) &lt;&lt; setfill('0') &lt;&lt; outptr[1] &lt;&lt; ' ';
           }
 
@@ -223,12 +225,12 @@ The correct should be 19.3.4.
 See the program at the end of the Page 915:
 
         vector&lt;int&gt; hist(2*15);
-     
+
         for(int i=0;i&lt;500;i++)
-                ++hist[int(round(gen()))] 
-     
-The problem is: 
-    That program doesn't consider situations where the random generated number is 
+                ++hist[int(round(gen()))]
+
+The problem is:
+    That program doesn't consider situations where the random generated number is
 greater than 29 or less than 0. Example:
 
 See the program below:
@@ -291,11 +293,11 @@ int main()
         auto gen = bind(normal_distribution&lt;double&gt;{15,4.0}, default_random_engine{});
 
         vector&lt;int&gt; hist(2*15);
-     
+
         for(int i=0;i&lt;500;i++)
         {
                 int x = int(round(gen()));
-                if(x &gt;= 0 &amp;&amp; x &lt; 30) 
+                if(x &gt;= 0 &amp;&amp; x &lt; 30)
                         ++hist[x];
         }
 
@@ -313,7 +315,7 @@ int main()
  Page 912
 ======================================================================
 
-elim_with_partial_pivot re-assign pivot and test if it is zero for each i. 
+elim_with_partial_pivot re-assign pivot and test if it is zero for each i.
 It is not necessary, my modified version is:
 
 void elim_with_partial_pivot(Matrix&amp; A, Vector&amp; b)
@@ -421,7 +423,7 @@ Matrix1D should have the following swap_rows:
         // if you want pairwise swap, just write it yourself
     {
         if (i == j) return;
-    
+
         std::swap((*this)(i), (*this)(j));
     }
 
@@ -442,7 +444,7 @@ Problem 2:
 a.slice(i);              // the rows from the ith to the last
 a.slice(i,j);            // the rows from the ith to the jth
 
-"rows" here is incorrect because "slice" generates 3d matrix. 
+"rows" here is incorrect because "slice" generates 3d matrix.
 And a.slice(i,j) will generate a matrix 3d from the ith to i+j-1 (not jth) 2d matrixes.
 
 Proof:
@@ -602,14 +604,14 @@ Proof:
 Image a list with 3 elements.
 element0 element1 element2
 d.line.size()-1 will be 2
-If you want to remove the element 2, the code 
+If you want to remove the element 2, the code
 will return because 2&lt;=2
 The problem is solved when you compare with "&lt;" rather than "&lt;="
 
  Page 738
 ======================================================================
 
-The new Document doesn't have constructor like Document of Page 736 
+The new Document doesn't have constructor like Document of Page 736
 
  Page 728
 ======================================================================
@@ -632,7 +634,7 @@ Iterator high(Iter first, Iter last)
 
 The correct should be:
 
-template&lt;typename Iter&gt;  
+template&lt;typename Iter&gt;
 requires Input_iterator&lt;Iter&gt;()  // (�19.3.3)
 Iter high(Iter first, Iter last)
           // return an iterator to the element in [first,last) that has the highest value
@@ -647,12 +649,12 @@ Iter high(Iter first, Iter last)
 ======================================================================
 
 There are some problem in this section:
-bug 1- 	vector_base constructor initializes sz with n which is used to initialize 
+bug 1- 	vector_base constructor initializes sz with n which is used to initialize
 	space as well; it is wrong. A solution is add an additional argument "int m"
 	which can be used to initialize sz with a independent value.
 
 bug 2- 	The vector&lt;T,A&gt;::reserve has a bug, see the line:
-		uninitialized_copy(b.elem,&amp;b.elem[this-&gt;sz],this-&gt;elem); 
+		uninitialized_copy(b.elem,&amp;b.elem[this-&gt;sz],this-&gt;elem);
 	the correct should be
 		uninitialized_copy(this-&gt;elem, this-&gt;elem+this-&gt;sz, b.elem);
 
@@ -667,11 +669,11 @@ bug 3-  The destructor of vector_base is wrong.
                 alloc.deallocate(elem, space);
         }
 	AND you have to delete this lines (on reserve method):
-	
+
 	for(int i=0;i&lt;sz;i++)
 		alloc.destroy(&amp;elem[i]);
 
-	
+
 I did a little program proofing it (19_5_6.cpp bellow) which has the following main:
         allocator&lt;double&gt; al;
         vector&lt;double&gt; x{al, {1.2, 3.4, 5.6}};
@@ -701,7 +703,7 @@ size: 3, capacity: 10
 3.4
 5.6
 -----------
-$ 
+$
 The result is OK.
 
 2- Compiling enabling the bug 1:
@@ -749,7 +751,7 @@ You can enable the bug 3 in this way:
 $ CC 19_5_6.cpp -std=c++11 -DINCORRECT3
 
 However, you will not see visual differences.
-The problem (when bug 3 is activated) would happen when you use a complex T that uses dynamic allocations, 
+The problem (when bug 3 is activated) would happen when you use a complex T that uses dynamic allocations,
 because vector would desalocate, when going out of a block, without destroy before.
 
 ** 19_5_6.cpp here: ***
@@ -768,19 +770,19 @@ struct vector_base {
         int sz;
         int space;
 
-        vector_base(const A &amp;a, int n, int m): 
-                alloc{a}, 
-                elem{alloc.allocate(n)}, 
+        vector_base(const A &amp;a, int n, int m):
+                alloc{a},
+                elem{alloc.allocate(n)},
         #ifndef INCORRECT1
-                sz{m}, 
+                sz{m},
         #else
                 sz{n},
         #endif
                 space{n}
         {}
 
-        ~vector_base() 
-	{ 	
+        ~vector_base()
+	{
 	#ifndef INCORRECT3
 		for(int i=0;i&lt;sz;i++)
 			alloc.destroy(&amp;elem[i]);
@@ -792,8 +794,8 @@ struct vector_base {
 template&lt;typename T, typename A = allocator&lt;T&gt;&gt;
 class vector: private vector_base&lt;T,A&gt; {
         public:
-                vector(const A &amp;a, initializer_list&lt;T&gt; lst): vector_base&lt;T,A&gt;{a, 0, 0} 
-                { 
+                vector(const A &amp;a, initializer_list&lt;T&gt; lst): vector_base&lt;T,A&gt;{a, 0, 0}
+                {
                         reserve(lst.size());
                         int j=0;
                         for(const T &amp;u : lst)
@@ -809,10 +811,10 @@ class vector: private vector_base&lt;T,A&gt; {
                         vector_base&lt;T,A&gt; b(this-&gt;alloc,newalloc, this-&gt;sz);
                 #ifndef INCORRECT2
                         uninitialized_copy(this-&gt;elem, this-&gt;elem+this-&gt;sz, b.elem);
-                #else 
+                #else
                         uninitialized_copy(b.elem,&amp;b.elem[this-&gt;sz],this-&gt;elem);
                 #endif
-		
+
 		#ifndef INCORRECT3
 			/* nothing */
 		#else
@@ -822,7 +824,7 @@ class vector: private vector_base&lt;T,A&gt; {
                         swap&lt;vector_base&lt;T,A&gt;&gt;(*this, b);
                 }
 
-                int size() const 
+                int size() const
                 {
                         return this-&gt;sz;
                 }
@@ -858,7 +860,7 @@ int main()
         for(int i=0;i&lt;x.size();i++)
                 cout &lt;&lt; x[i] &lt;&lt; endl;
         cout &lt;&lt; "-----------" &lt;&lt; endl;
-    
+
         return 0;
 }
 
@@ -944,13 +946,13 @@ The original code doesn't change the color immediately when the button is clicke
  Page 561
 ======================================================================
 
-The Widget presented in the page 561 is different from Widget 
+The Widget presented in the page 561 is different from Widget
 presented in the page 1209 (appendix E).
 
  Page 561
 ======================================================================
 
-The Button presented in the page 561 is "different" from Button 
+The Button presented in the page 561 is "different" from Button
 presented in the page 563
 
  Page 530
@@ -1011,7 +1013,7 @@ https://groups.google.com/forum/#!topic/comp.lang.c++/Qqq_0A27EtA
 
 Detailed study about it:
 Effective Modern C++, Chapter 3, Item 7: Distinguish between () and {} when creating
-objects 
+objects
 
  Page 476
 ======================================================================
@@ -1047,28 +1049,28 @@ It is missing definition to the following methods:
 
 The definitions should be:
 //------------------------------------------------------------------------------
-    
+
 Ellipse::Ellipse(Point p, int w, int h): w{w}, h{h}
 {
         add(Point{p.x-w,p.y-h});
 }
-    
+
 //------------------------------------------------------------------------------
-    
+
 Point Ellipse::center() const
 {
         return Point{point(0).x+w,point(0).y+h};
 }
-    
+
 //------------------------------------------------------------------------------
-    
+
 Point Ellipse::focus2() const
 {
         if(h&lt;=w) // foci are on the x axis
                 return Point{center().x-int(sqrt(double(w*w-h*h))),center().y};
         else     // foci are on the y axis
                 return Point{center().x,center().y-int(sqrt(double(h*h-w*w)))};
-} 
+}
 
 //------------------------------------------------------------------------------
 
@@ -1095,21 +1097,21 @@ the correct should be
 ======================================================================
 
 The correct Text's draw_lines should be:
-    
+
 void Text::draw_lines() const
 {
         int ofnt = fl_font(); 		// save previous font
         int osz = fl_size();  		// save previous fontsize
-        fl_font(fnt.as_int(),fnt_sz); 	// set font and fontsize from this Font instance 
+        fl_font(fnt.as_int(),fnt_sz); 	// set font and fontsize from this Font instance
         fl_draw(lab.c_str(),point(0).x,point(0).y); // write label
         fl_font(ofnt,osz);    		// Back to previous configuration
 }
- 
+
 
  Page 1212
 ======================================================================
 
-Vector_ref: 
+Vector_ref:
 The following constructor is not defined:
 Vector_ref(T* a, T* b = 0, T* c = 0, T* d = 0);
 Therefore it can be removed. Final Vector_ref:
@@ -1119,15 +1121,15 @@ template&lt;class T&gt; class Vector_ref {
     vector&lt;T*&gt; owned;
 public:
     Vector_ref() {}
-    
+
     ~Vector_ref() { for (int i=0; i&lt;owned.size(); ++i) delete owned[i]; }
-    
+
     void push_back(T&amp; s) { v.push_back(&amp;s); }
     void push_back(T* p) { v.push_back(p); owned.push_back(p); }
-    
+
     T&amp; operator[](int i) { return *v[i]; }
     const T&amp; operator[](int i) const { return *v[i]; }
-    
+
     int size() const { return v.size(); }
 };
 
@@ -1137,7 +1139,7 @@ public:
 Problem 1
 
 The book says:
-"Here we inherit Closed_polyline's definition of draw_lines(), 
+"Here we inherit Closed_polyline's definition of draw_lines(),
 thus saving a fair bit work and avoiding duplication of code."
 
 BUT the structure Polygon presented has as member:
@@ -1145,7 +1147,7 @@ void draw_lines() const;
 
 Therefore Closed_polyline's draw_lines should be removed.
 
-Problem 2 
+Problem 2
 
 The following statement:
 using Closed_polyline::Closed_polyline;
@@ -1216,7 +1218,7 @@ Other reference:
 Discussion more detailed:
 https://groups.google.com/forum/#!topic/comp.lang.c++/WuBAGONp4oQ
 
- Page 494 
+ Page 494
 ======================================================================
 
 class Shape, where you have
@@ -1227,7 +1229,7 @@ change to
 Justification:
 	It is necessary for the code runs on several platforms
 
- Page 450 
+ Page 450
 ======================================================================
 
 where you have
@@ -1236,7 +1238,7 @@ where you have
 the correct should be
 	Lines::Lines(initializer_list........
 
-because constructors don't have return type 
+because constructors don't have return type
 
  Page 445
 ======================================================================
