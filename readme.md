@@ -1,7 +1,7 @@
 ### Hello, FLTK
 Stable, debugged version of the FLTK middleware from Stroustrup's Principles and Practice, Chapters 12-16. The code in `main.cpp` implements the first example from Chapter 12, which draws a red triangle. It's the `hello world` for Stroustrup's interface withi FLTK. But the header and program files implement the interface that is used for all of Chapters 12-16. This repository also includes the figures and other data used for the examples (e.g., `image.jpg` is used in Section 12.7.9).
 
-This code is Christiano's version of the library from the google group devoted to Stroustrup's book:
+This code is Christiano's version of the library (`ch12new`) from the google group devoted to Stroustrup's book:
 
 https://groups.google.com/forum/#!topic/ppp-public/Url2jZtSrVQ
 
