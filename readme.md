@@ -10,7 +10,7 @@ You can also find a megathread on fixing the code here:
 https://groups.google.com/forum/#!msg/ppp-public/BtlzdWGuQpQ/KuDN4u-SPKgJ
 
 ### Building the executable
-This has been thoroughly tested in Linux (I'm on Ubuntu 16). There are multiple ways to build the executable `hello_fltk`. I give three different ways below: just pick the approach that best meets your current needs.
+This has been thoroughly tested in Linux (I'm on Ubuntu 16). There are multiple ways to build the executable `hello_fltk`. I give three different ways below: just pick the approach that best matches your current needs. For instance, if you built FLTK using cmake, you may want to use cmake to build your projects, and other build methods may give errors. The best way to find out is trial and error.
 
 #### From the command line
 From the project directory:
