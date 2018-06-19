@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(project_name LANGUAGES CXX)
+project(hello_fltk LANGUAGES CXX)
 set(FLTK_DIR /usr/lib/fltk-1.4/build)
 find_package(FLTK REQUIRED NO_MODULE)
 include_directories(${FLTK_INCLUDE_DIRS})
