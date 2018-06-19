@@ -1,16 +1,16 @@
 ### Hello, FLTK
-Stable, debugged version of the FLTK middleware from Stroustrup's Principles and Practice, Chapters 12-16. The code in `main.cpp` implements the first example from Chapter 12, which draws a red rectangle. This project is a kind of hello world of PPPs vision of fltk, but the code is what you will probably want to use use for all of Chapters 12-16 in the book. This repository also includes the figures and other data used for all of Chapters 12-16 (e.g., image.jpg is used later in Chapter 12).
+Stable, debugged version of the FLTK middleware from Stroustrup's Principles and Practice, Chapters 12-16. The code in `main.cpp` implements the first example from Chapter 12, which draws a red triangle. It's the `hello world` for Stroustrup's interface withi FLTK. But the header and program files implement the interface that is used for all of Chapters 12-16. This repository also includes the figures and other data used for the examples (e.g., `image.jpg` is used in Section 12.7.9).
 
 This code is Christiano's version of the library from the google group devoted to Stroustrup's book:
 
 https://groups.google.com/forum/#!topic/ppp-public/Url2jZtSrVQ
 
-For discussion, you can find a megathread on fixing the code here:
+You can also find a megathread on fixing the code here:
 
 https://groups.google.com/forum/#!msg/ppp-public/BtlzdWGuQpQ/KuDN4u-SPKgJ
 
 ### Building the executable
-This has been thoroughly tested in Linux (I'm on Ubuntu 16). There are multiple ways to build the same executable. I give three different ways below: you should just do whatever best meets your current needs.
+This has been thoroughly tested in Linux (I'm on Ubuntu 16). There are multiple ways to build the executable `hello_fltk`. I give three different ways below: just pick the approach that best meets your current needs.
 
 #### From the command line
 From the project directory:
