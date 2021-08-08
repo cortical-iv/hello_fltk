@@ -9,7 +9,7 @@ int main()
 
   Simple_window win {top_left, 600, 400, "Canvas"};
 
-  Polygon poly;    //make a shape a polygon
+  Graph_lib::Polygon poly;    //make a shape a polygon
 
   //add some points, set color of poly
   poly.add(Point{300, 200});
